@@ -1,0 +1,124 @@
+{% load django_bootstrap5 %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>レシピアプリ - レシピ詳細</title>
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+</head>
+<body>
+<div class="container-fluid">
+    <!-- ヘッダー -->
+    <div class="row bg-light p-3 align-items-center">
+        <div class="col-md-3">
+            <h2>🍳 レシピの詳細</h2>
+        </div>
+        <div class="col-md-5">
+            <form class="d-flex" method="get" action="{% url 'search_recipes' %}">
+                <input type="search" name="q" class="form-control me-2" placeholder="キーワードで検索" value="{{ request.GET.q }}">
+                <button class="btn btn-outline-success" type="submit">検索</button>
+            </form>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if user.is_authenticated %}
+                <span>{{ user.username }}でログイン中</span>
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">ログアウト</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-sm btn-outline-primary">ログイン</a>
+                <a href="{% url 'register' %}" class="btn btn-sm btn-outline-secondary">新規登録</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="container my-4">
+        <div class="row">
+            <!-- 画像 -->
+            <div class="col-md-5 mb-3">
+                {% if recipe.image %}
+                    <img src="{{ recipe.image.url }}" alt="レシピ画像" class="img-fluid rounded" style="object-fit: cover; height: 300px; width: 100%;">
+                {% else %}
+                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height:300px;">
+                        画像がありません
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- レシピ詳細 -->
+            <div class="col-md-7">
+                <h2>{{ recipe.title }}</h2>
+                <p class="text-muted mb-1">作成日: {{ recipe.created_at|date:"Y年m月d日" }}</p>
+                <p class="text-muted mb-3">作者: {{ recipe.author.username }}</p>
+                <p>{{ recipe.description|linebreaksbr }}</p>
+                <p><strong>調理時間：</strong>{{ recipe.cooking_time }} 分</p>
+
+                <!-- お気に入りボタン -->
+                {% if user.is_authenticated %}
+                <form action="{% url 'toggle_favorite' recipe.id %}" method="POST" class="mb-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger">
+                        {% if user in recipe.favorited_by.all %}
+                            ♥ お気に入り解除
+                        {% else %}
+                            ♡ お気に入り登録
+                        {% endif %}
+                    </button>
+                </form>
+                {% else %}
+                    <p class="text-muted">ログインするとお気に入り登録ができます。</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 材料一覧 -->
+        <div class="mt-4">
+            <h4>🧂 材料</h4>
+            <ul class="list-group">
+                {% for ingredient in recipe.ingredients.all %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ ingredient.name }}
+                        <span>{{ ingredient.quantity|default:"" }} {{ ingredient.unit }}</span>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item">材料情報がありません。</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- コメント欄 -->
+        <div class="mt-5">
+            <h4>💬 コメント</h4>
+            {% if user.is_authenticated %}
+                <form method="POST" action="{% url 'add_comment' recipe.id %}" class="mb-4">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea name="content" rows="3" class="form-control" placeholder="コメントを書く..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">コメントを投稿</button>
+                </form>
+            {% else %}
+                <p class="text-muted">コメントするにはログインが必要です。</p>
+            {% endif %}
+
+            <!-- コメント一覧 -->
+            {% for comment in recipe.comments.all %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">{{ comment.user.username }} <small class="text-secondary">{{ comment.created_at|date:"Y/m/d H:i" }}</small></h6>
+                        <p class="card-text">{{ comment.content|linebreaksbr }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <p>まだコメントがありません。</p>
+            {% endfor %}
+        </div>
+
+        <!-- 戻るボタン -->
+        <div class="mt-4">
+            <a href="{% url 'search_recipes' %}" class="btn btn-secondary">← 戻る</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

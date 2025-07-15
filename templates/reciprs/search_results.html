@@ -1,0 +1,95 @@
+{% load django_bootstrap5 %}
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>検索結果</title>
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+</head>
+<body>
+<div class="container-fluid">
+    <!-- ヘッダー -->
+    <div class="row bg-light p-3 align-items-center">
+        <div class="col-md-3">
+            <h2>🍳 レシピを検索</h2>
+        </div>
+        <div class="col-md-5">
+            <form class="d-flex" method="get" action="{% url 'search_recipes' %}">
+                <input type="search" name="q" class="form-control me-2" placeholder="キーワードで検索" value="{{ request.GET.q }}">
+                <button class="btn btn-outline-success" type="submit">検索</button>
+            </form>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if user.is_authenticated %}
+                <span>{{ user.username }}でログイン中</span>
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">ログアウト</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-sm btn-outline-primary">ログイン</a>
+                <a href="{% url 'register' %}" class="btn btn-sm btn-outline-secondary">新規登録</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- コンテンツ -->
+    <div class="row mt-4">
+        <!-- 左サイドバー -->
+        <div class="col-md-2">
+            <div class="list-group">
+                <a href="{% url 'favorites' %}" class="list-group-item list-group-item-action">♡ お気に入りレシピ</a>
+                <a href="{% url 'shopping_list' %}" class="list-group-item list-group-item-action">🛒 買い物リスト</a>
+                <a href="{% url 'post_recipe' %}" class="list-group-item list-group-item-action">＋ レシピを投稿</a>
+            </div>
+        </div>
+
+        <!-- 中央：検索結果 -->
+        <div class="col-md-7">
+            {% if results %}
+                <h4>🔍 検索結果：{{ results|length }}件のレシピが見つかりました</h4>
+            {% else %}
+                <h4>🔍 検索結果：該当するレシピはありません</h4>
+            {% endif %}
+
+            {% if results %}
+                {% for recipe in results %}
+                    <div class="card mb-3" style="max-width: 800px;">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <img src="{{ recipe.image.url }}" class="img-fluid rounded-start" alt="レシピ画像" style="height: 180px; width: 130px; object-fit: cover;">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title d-flex justify-content-between">
+                                        <span>{{ recipe.title }}</span>
+                                        <span style="font-size: 14px; color: #666;">{{ recipe.cooking_time }}分</span>
+                                    </h5>
+                                    <p class="card-text">{{ recipe.message }}</p>
+                                    <a href="{% url 'recipe_detail' recipe.id %}" class="btn btn-sm btn-primary">詳細を見る</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>「{{ query }}」に該当するレシピはありません。</p>
+            {% endif %}
+        </div>
+
+        <!-- 右サイドバー -->
+        <div class="col-md-3">
+            <h4>👍 人気レシピランキング</h4>
+            {% for recipe in ranked_recipes %}
+                <div class="mb-2 border-bottom pb-2">
+                    <strong>{{ forloop.counter }}位：</strong>
+                    <a href="{% url 'recipe_detail' recipe.id %}">{{ recipe.title }}</a><br>
+                    <img src="{{ recipe.image.url }}" alt="レシピ画像" style="width: 200px; height: 100px; object-fit: cover;">
+                    <br><small>♡ {{ recipe.favorited_by.count }}件</small>
+                </div>
+            {% empty %}
+                <p>ランキングはまだありません。</p>
+            {% endfor %}
+    </div>
+</div>
+</body>
+</html>

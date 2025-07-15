@@ -1,0 +1,107 @@
+{% load django_bootstrap5 %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>レシピアプリ</title>
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const addButton = document.getElementById('add-more');
+        const formContainer = document.getElementById('ingredient-form-container');
+        const totalFormsInput = document.querySelector('input[name$="-TOTAL_FORMS"]');
+
+        addButton.addEventListener('click', function () {
+          let totalForms = parseInt(totalFormsInput.value);
+          const formDivs = document.querySelectorAll('.ingredient-form');
+          const lastForm = formDivs[formDivs.length - 1];
+
+          for (let i = 0; i < 3; i++) {
+            const newForm = lastForm.cloneNode(true);
+            const formRegex = new RegExp(`-${totalForms - 1}-`, 'g');
+            newForm.innerHTML = newForm.innerHTML.replace(formRegex, `-${totalForms}-`);
+
+            // 入力欄の値をリセット
+            const inputs = newForm.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => input.value = '');
+
+            formContainer.appendChild(newForm);
+            totalForms++;
+          }
+
+          totalFormsInput.value = totalForms;
+        });
+      });
+    </script>
+</head>
+<body>
+
+<div class="container-fluid">
+    <!-- ヘッダー -->
+    <div class="row bg-light p-3 align-items-center">
+        <div class="col-md-3">
+            <h2>🍳 レシピを投稿</h2>
+        </div>
+        <div class="col-md-5">
+            <form class="d-flex" method="get" action="{% url 'search_recipes' %}">
+                <input type="search" name="q" class="form-control me-2" placeholder="キーワードで検索" value="{{ request.GET.q }}">
+                <button class="btn btn-outline-success" type="submit">検索</button>
+            </form>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if user.is_authenticated %}
+                <span>{{ user.username }}でログイン中</span>
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">ログアウト</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-sm btn-outline-primary">ログイン</a>
+                <a href="{% url 'register' %}" class="btn btn-sm btn-outline-secondary">新規登録</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- レシピ投稿フォーム -->
+    <form method="post" enctype="multipart/form-data" class="container mt-4">
+        {% csrf_token %}
+
+        <!-- タイトル -->
+        {% bootstrap_field form.title %}
+
+        <!-- 材料フォームセット -->
+        {{ ingredient_formset.management_form }}
+        <div id="ingredient-form-container">
+            <div id="ingredient-form-container">
+            {% for subform in ingredient_formset %}
+                <div class="row g-3 mb-3 ingredient-form">
+                    <div class="col-md-4">
+                        {% bootstrap_field subform.name %}
+                    </div>
+                    <div class="col-md-4">
+                        {% bootstrap_field subform.quantity %}
+                    </div>
+                    <div class="col-md-4">
+                        {% bootstrap_field subform.unit %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+</div>
+
+
+        <!-- 材料追加ボタン -->
+        <button type="button" id="add-more" class="btn btn-outline-primary mb-3">＋ 材料追加</button>
+
+        <!-- その他フォーム -->
+        {% bootstrap_field form.cooking_time %}
+        {% bootstrap_field form.message %}
+        {% bootstrap_field form.image %}
+
+        <!-- 投稿ボタン -->
+        <button type="submit" class="btn btn-primary">投稿</button>
+        <button type="submit" class="btn btn-primary">戻る</button>
+
+    </form>
+</div>
+
+</body>
+</html>
