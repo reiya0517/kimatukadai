@@ -8,15 +8,16 @@ https://docs.djangoproject.com/en/4.2/howto/deployment/wsgi/
 """
 
 import os
-import django 
+import django
 from django.core.wsgi import get_wsgi_application
-
-django.setup()
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
-application = get_wsgi_application()
+# 追加
+# Django を初期化してコマンドを実行可能にする
+django.setup()
 
+# ---- ここから初期化処理 ----
 from django.core.management import call_command
 from django.contrib.auth import get_user_model
 from django.db import OperationalError
@@ -37,7 +38,4 @@ except OperationalError as e:
     # DBが起動していないなど、初期タイミングのエラー対処
     print("Database not ready yet:", e)
 # ---- 初期化処理ここまで ----
-# 追加終了
-
 application = get_wsgi_application()
-
