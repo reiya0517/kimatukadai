@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.forms import inlineformset_factory
-from .models import Recipe, Ingredient
+from .models import Recipe, Ingredient,Step
 
 # ユーザー登録フォーム
 class RegisterForm(UserCreationForm):
@@ -35,7 +35,7 @@ class RecipeForm(forms.ModelForm):
 # 材料入力フォーム
 class IngredientForm(forms.ModelForm):
     quantity = forms.IntegerField(
-        required=False,  # ←ここで必須解除
+        required=False,
         widget=forms.NumberInput(attrs={
             'placeholder': '0',
             'min': 0,
@@ -54,7 +54,8 @@ class IngredientForm(forms.ModelForm):
         }
         widgets = {
             'name': forms.TextInput(attrs={'placeholder': '材料名：'}),
-            'unit': forms.TextInput(),  # もしunitにwidget設定あればここに追加
+            'unit': forms.Select(),
+
         }
 
 
@@ -63,6 +64,24 @@ IngredientFormSet = inlineformset_factory(
     Recipe,
     Ingredient,
     form=IngredientForm,
-    extra=3,  # 必要に応じて変更可能
+    extra=3,
     can_delete=True
 )
+
+
+# 作り方フォーム
+class StepForm(forms.ModelForm):
+    class Meta:
+        model = Step
+        fields = ['description']
+        labels = {'description': '作り方'}
+        widgets = {'description': forms.Textarea(attrs={'rows': 2, 'placeholder': '例：野菜を切る'})}
+
+StepFormSet = inlineformset_factory(
+    Recipe,
+    Step,
+    form=StepForm,
+    extra=3,
+    can_delete=True
+)
+

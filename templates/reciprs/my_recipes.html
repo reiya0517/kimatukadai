@@ -1,10 +1,10 @@
-{% load django_bootstrap5 %}
 {% load static %}
+{% load django_bootstrap5 %}
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>レシピアプリ - 買い物リスト</title>
+    <title>自分の投稿レシピ - レシピアプリ</title>
     {% bootstrap_css %}
     {% bootstrap_javascript %}
     <style>
@@ -32,17 +32,16 @@
             padding: 25px;
             margin-bottom: 20px;
         }
-        .shopping-item-card {
+        .recipe-card {
             background: white;
             border-radius: 15px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.08);
             transition: all 0.3s ease;
             overflow: hidden;
-            border-left: 4px solid #28a745;
         }
-        .shopping-item-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+        .recipe-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
         }
         .nav-item {
             padding: 12px 16px;
@@ -61,7 +60,7 @@
             transform: translateX(5px);
         }
         .nav-item.active {
-            background: linear-gradient(45deg, #28a745, #20c997);
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
             color: white;
         }
         .section-title {
@@ -69,49 +68,33 @@
             font-weight: 600;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 3px solid #28a745;
+            border-bottom: 3px solid #667eea;
         }
-        .empty-state {
+        .hint-card {
             background: linear-gradient(45deg, #f8f9ff, #fff);
             border-radius: 15px;
-            padding: 40px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+        .empty-state {
             text-align: center;
-            border: 2px dashed #28a745;
+            padding: 60px 20px;
+            color: #666;
         }
-        .ingredient-badge {
-            background: linear-gradient(45deg, #28a745, #20c997);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 500;
-            display: inline-block;
-            margin-bottom: 10px;
+        .empty-state h5 {
+            color: #667eea;
+            margin-bottom: 15px;
         }
-        .btn-delete {
-            background: linear-gradient(45deg, #dc3545, #fd7e14);
-            border: none;
-            border-radius: 20px;
-            padding: 6px 15px;
-            color: white;
-            transition: all 0.3s ease;
-        }
-        .btn-delete:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
-            color: white;
-        }
-        .btn-detail {
+        .btn-primary {
             background: linear-gradient(45deg, #667eea, #764ba2);
             border: none;
             border-radius: 20px;
-            padding: 6px 15px;
-            color: white;
+            padding: 8px 20px;
             transition: all 0.3s ease;
         }
-        .btn-detail:hover {
+        .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-            color: white;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
         }
     </style>
 </head>
@@ -123,7 +106,7 @@
     <div class="header-card p-4">
         <div class="row align-items-center">
             <div class="col-md-3">
-                <h2 class="mb-0">🍳 <span style="background: linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">買い物リスト</span></h2>
+                <h2 class="mb-0">🍳 <span style="background: linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">投稿したレシピ</span></h2>
             </div>
             <div class="col-md-5">
                 <form class="d-flex" method="get" action="{% url 'search_recipes' %}">
@@ -157,24 +140,23 @@
                 <h5 class="text-center mb-3" style="color: #667eea;">📋 メニュー</h5>
                 <a href="{% url 'index' %}" class="nav-item">🏠 Home</a>
                 <a href="{% url 'favorites' %}" class="nav-item">♡ お気に入りレシピ</a>
-                <a href="{% url 'shopping_list' %}" class="nav-item active">🛒 買い物リスト</a>
+                <a href="{% url 'shopping_list' %}" class="nav-item">🛒 買い物リスト</a>
                 <a href="{% url 'post_recipe' %}" class="nav-item">＋ レシピを投稿</a>
-                {% if user.is_authenticated %}
-                <a href="{% url 'my_recipes' %}" class="nav-item">📋 自分の投稿レシピ</a>
-                {% endif %}
+                <a href="{% url 'my_recipes' %}" class="nav-item active">📋 自分の投稿レシピ</a>
             </div>
         </div>
 
-        <!-- メイン（買い物リスト） -->
+        <!-- メイン -->
         <div class="col-md-7">
             <div class="content-card">
-                <h4 class="section-title">🛒 買い物リスト</h4>
-                {% for item in items %}
-                    <div class="shopping-item-card mb-4">
+                <h4 class="section-title">📋 {{ user.username }}さんの投稿レシピ一覧</h4>
+
+                {% for recipe in recipes %}
+                    <div class="recipe-card mb-4">
                         <div class="row g-0">
                             <div class="col-md-4">
-                                {% if item.ingredient.recipe.image %}
-                                    <img src="{{ item.ingredient.recipe.image.url }}" class="img-fluid h-100" alt="レシピ画像" style="object-fit: cover; min-height: 200px;">
+                                {% if recipe.image %}
+                                    <img src="{{ recipe.image.url }}" class="img-fluid h-100" alt="レシピ画像" style="object-fit: cover; min-height: 200px;">
                                 {% else %}
                                     <img src="{% static 'images/noimage.png' %}" class="img-fluid h-100" alt="画像なし" style="object-fit: cover; min-height: 200px;">
                                 {% endif %}
@@ -182,31 +164,22 @@
                             <div class="col-md-8">
                                 <div class="card-body p-4">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h4 class="card-title mb-0" style="color: #333;">{{ item.ingredient.recipe.title }}</h4>
-                                        <span class="badge bg-success">{{ item.ingredient.recipe.created_at|date:"m/d" }}</span>
+                                        <h4 class="card-title mb-0" style="color: #333;">{{ recipe.title }}</h4>
+                                        <span class="badge bg-primary">{{ recipe.created_at|date:"Y年m月d日" }}</span>
                                     </div>
-                                    <p class="text-muted mb-2" style="font-size: 14px;">👨‍🍳 {{ item.ingredient.recipe.author.username }}</p>
-                                    
-                                    <div class="ingredient-badge mb-3">
-                                        🛍️ {{ item.ingredient.name }} {{ item.quantity }} {{ item.unit }}
-                                    </div>
-                                    
-                                    <div class="d-flex gap-2">
-                                        <a href="{% url 'recipe_detail' item.ingredient.recipe.id %}" class="btn btn-detail">詳細を見る</a>
-                                        <form method="post" action="{% url 'delete_shopping_item' item.id %}" style="display:inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-delete" onclick="return confirm('この材料を削除しますか？')">削除</button>
-                                        </form>
-                                    </div>
+                                    <p class="text-muted mb-2" style="font-size: 14px;">👨‍🍳 {{ recipe.author.username }}</p>
+                                    <p class="mb-2" style="color: #666;">⏱️ {{ recipe.cooking_time }}分</p>
+                                    <p class="mb-3" style="color: #555;">{{ recipe.message|truncatechars:80 }}</p>
+                                    <a href="{% url 'recipe_detail' recipe.id %}" class="btn btn-primary">詳細を見る</a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 {% empty %}
                     <div class="empty-state">
-                        <h5 style="color: #28a745; margin-bottom: 15px;">🛒 買い物リストは空です</h5>
-                        <p style="color: #666; margin-bottom: 20px;">レシピから材料を追加して、お買い物を計画しましょう！</p>
-                        <a href="{% url 'index' %}" class="btn btn-success" style="border-radius: 25px; padding: 10px 25px;">レシピを見る</a>
+                        <h5>📝 投稿したレシピはまだありません</h5>
+                        <p>あなたの最初のレシピを投稿してみませんか？</p>
+                        <a href="{% url 'post_recipe' %}" class="btn btn-primary" style="border-radius: 25px;">✨ レシピを投稿</a>
                     </div>
                 {% endfor %}
             </div>
@@ -215,15 +188,10 @@
         <!-- 右サイドバー -->
         <div class="col-md-3">
             <div class="sidebar-card">
-                <h5 class="text-center mb-3" style="color: #28a745;">💡 お買い物のコツ</h5>
-                <div class="p-3" style="background: linear-gradient(45deg, #f8f9ff, #fff); border-radius: 10px; margin-bottom: 15px;">
-                    <p style="margin: 0; color: #666; font-size: 14px;">📝 リストを印刷して持参すると便利です</p>
-                </div>
-                <div class="p-3" style="background: linear-gradient(45deg, #f8f9ff, #fff); border-radius: 10px; margin-bottom: 15px;">
-                    <p style="margin: 0; color: #666; font-size: 14px;">🛍️ 同じ売り場の商品をまとめて買いましょう</p>
-                </div>
-                <div class="p-3" style="background: linear-gradient(45deg, #f8f9ff, #fff); border-radius: 10px;">
-                    <p style="margin: 0; color: #666; font-size: 14px;">💰 特売日をチェックして節約しましょう</p>
+                <h5 class="section-title">🔔 ヒント</h5>
+                <div class="hint-card">
+                    <p style="color: #666; margin-bottom: 10px;">ここにはあなたが投稿したレシピが表示されます。</p>
+                    <p style="color: #666; margin-bottom: 0;">レシピを編集・削除することもできます。</p>
                 </div>
             </div>
         </div>
